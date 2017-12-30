@@ -18,26 +18,14 @@ def index():
 
 def get_players():
 
-    team = []
+#    team = []
 
     current_path = os.getcwd()
 
     all_players = cPickle.load(open(current_path + "/app/players.data.pickle"))
 
-    for players in all_players["elements"]:
-        if players["team_code"] == 3:
-            # try:
-                team.append(players["first_name"] + " " + players["second_name"])
-            # except:
-            #     if players["id"] == 7:
-            #         team.append("Hector Bellerin")
-            #     if players["id"] == 14:
-            #         team.append("Alexis Sanchez")
-            #     if players["id"] == 16:
-            #         team.append("Mesut Ozil")
-            #     if players["id"] == 27:
-            #         team.append("Lucas Perez")
-
+    team = [(players["first_name"] + " " + players["second_name"]) for players in all_players["elements"] if players["team_code"] == 3]
+    
     return team
 
 # print all_players["elements"][0]["first_name"] + " " + all_players["elements"][0]["second_name"]
