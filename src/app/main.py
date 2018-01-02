@@ -1,5 +1,7 @@
 import cPickle
 import numpy as np
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
 from flask import Flask, request, render_template
 from app import app
 from app.models import *
@@ -25,9 +27,9 @@ def get_players():
 
     all_players = cPickle.load(open(current_path + "/app/players.data.pickle"))
 
-    player_names = [(players["first_name"] + " " + players["second_name"]) for players in all_players["elements"] if players["team_code"] == 3]
-    form = [(float(players["form"])) for players in all_players["elements"] if players["team_code"] == 3]
-    cost = [(players["now_cost"]) for players in all_players["elements"] if players["team_code"] == 3]
+    player_names = [(players["first_name"] + " " + players["second_name"]) for players in all_players["elements"]]
+    form = [(float(players["form"])) for players in all_players["elements"]]
+    cost = [(players["now_cost"]) for players in all_players["elements"]]
 
     length = len(player_names)
     player_arr = []             # List to hold form and cost for every player
@@ -36,9 +38,13 @@ def get_players():
         player_arr.append([cost[i], form[i]])
         player_info[(cost[i], form[i])] = player_names[i]
 
-    k_means_matrix = np.array(player_arr)
-    
-    return player_names, form, cost, player_arr
+    k_means_matrix = np.array(player_arr, dtype=float)
+    y_pred = KMeans(n_clusters= 4, random_state=0, n_init=100).fit_predict(k_means_matrix)
+    plt.scatter(k_means_matrix[:,0], k_means_matrix[:,1], c=y_pred)
+    plt.savefig("clustertest.png")
+    plt.close()
+
+    return player_names, form, cost, k_means_matrix
 
 # print all_players["elements"][0]["first_name"] + " " + all_players["elements"][0]["second_name"]
 
