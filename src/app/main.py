@@ -1,4 +1,5 @@
 import cPickle
+import numpy as np
 from flask import Flask, request, render_template
 from app import app
 from app.models import *
@@ -12,9 +13,9 @@ sys.dont_write_bytecode = True
 @app.route('/', methods = ['GET', 'POST'])
 def index():
 
-    team = get_players()
-
-    return render_template('index.html', team=team)
+    player_names, form, cost, player_arr = get_players()
+    count = len(player_names)
+    return render_template('index.html', player_names=player_names, form=form, cost=cost, count=count, player_arr=player_arr)
 
 def get_players():
 
@@ -24,9 +25,20 @@ def get_players():
 
     all_players = cPickle.load(open(current_path + "/app/players.data.pickle"))
 
-    team = [(players["first_name"] + " " + players["second_name"]) for players in all_players["elements"] if players["team_code"] == 3]
+    player_names = [(players["first_name"] + " " + players["second_name"]) for players in all_players["elements"] if players["team_code"] == 3]
+    form = [(float(players["form"])) for players in all_players["elements"] if players["team_code"] == 3]
+    cost = [(players["now_cost"]) for players in all_players["elements"] if players["team_code"] == 3]
+
+    length = len(player_names)
+    player_arr = []             # List to hold form and cost for every player
+    player_info = {}            # Dict that will match a form-cost tuple to player name
+    for i in range(length):
+        player_arr.append([cost[i], form[i]])
+        player_info[(cost[i], form[i])] = player_names[i]
+
+    k_means_matrix = np.array(player_arr)
     
-    return team
+    return player_names, form, cost, player_arr
 
 # print all_players["elements"][0]["first_name"] + " " + all_players["elements"][0]["second_name"]
 

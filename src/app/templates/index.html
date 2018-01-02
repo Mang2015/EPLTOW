@@ -1,5 +1,6 @@
 {% block content %}
-{% for player in team %}
-<p>{{player}}</p>
+{% for i in range(count) %}
+<p>{{player_names[i]}}, {{cost[i]}}, {{form[i]}}</p>
 {% endfor %}
+<p>{{player_arr}}</p>
 {% endblock %}
