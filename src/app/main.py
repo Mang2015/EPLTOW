@@ -2,6 +2,7 @@ import cPickle
 import numpy as np
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from flask import Flask, request, render_template
 from app import app
 from app.models import *
@@ -22,30 +23,61 @@ def index():
 def get_players():
 
 #    team = []
-
+    fignum = 1
     current_path = os.getcwd()
 
     all_players = cPickle.load(open(current_path + "/app/players.data.pickle"))
 
-    player_names = [(players["first_name"] + " " + players["second_name"]) for players in all_players["elements"]]
-    form = [(float(players["form"])) for players in all_players["elements"]]
-    cost = [(players["now_cost"]) for players in all_players["elements"]]
+    player_names = [(players["first_name"] + " " + players["second_name"]) for players in all_players["elements"] if players["status"] != "i"]
+    form = [(float(players["form"])) for players in all_players["elements"] if players["status"] != "i"]
+    cost = [(players["now_cost"]) for players in all_players["elements"] if players["status"] != "i"]
+    position = [(players["element_type"]) for players in all_players["elements"] if players["status"] != "i"]
 
     length = len(player_names)
     player_arr = []             # List to hold form and cost for every player
-    player_info = {}            # Dict that will match a form-cost tuple to player name
+    position_arr = []           # List to hold position and form for every player
     for i in range(length):
-        player_arr.append([cost[i], form[i]])
-        player_info[(cost[i], form[i])] = player_names[i]
+        player_arr.append([cost[i], form[i], position[i]])
+        position_arr.append([position[i], form[i]])
 
     k_means_matrix = np.array(player_arr, dtype=float)
-    y_pred = KMeans(n_clusters= 4, random_state=0, n_init=100).fit_predict(k_means_matrix)
-    plt.scatter(k_means_matrix[:,0], k_means_matrix[:,1], c=y_pred)
+    position_form_matrix = np.array(position_arr, dtype=float)
+    y_pred = KMeans(n_clusters= 4, init='k-means++', random_state=0, n_init=100).fit_predict(k_means_matrix)
+    pos_form_labels = KMeans(n_clusters=3, init='k-means++', random_state=0, n_init=100).fit_predict(position_form_matrix)
+    fig = plt.figure(fignum, figsize=(9, 6))
+    ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
+    ax.scatter(k_means_matrix[:,0], k_means_matrix[:,1], k_means_matrix[:,2], c=y_pred)
     plt.savefig("clustertest.png")
     plt.close()
+    plt.scatter(position_form_matrix[:,0], position_form_matrix[:,1], c=pos_form_labels)
+    plt.savefig("pos_form.png")
+    plt.close()
 
-    return player_names, form, cost, k_means_matrix
+    pick_team(all_players, player_names, form, cost, position)
 
+def pick_team(all_players, player_names, form, cost, position):
+    extra_cash = 0
+    gks = []
+    defs = []
+    mids = []
+    fwds = []
+
+    for i in range(len(position)):
+        if position[i] == 1:
+            gks.append([player_names[i], cost[i], form[i]])
+        elif position[i] == 2:
+            defs.append([player_names[i], cost[i], form[i]])
+        elif position[i] == 3:
+            mids.append([player_names[i], cost[i], form[i]])
+        else:
+            fwds.append([player_names[i], cost[i], form[i]])
+
+    fin_fwds = pick_players(fwds, 2, 330)
+
+    return player_names, form, cost, y_pred
+
+def pick_players(players, spots, budget):
+    
 # print all_players["elements"][0]["first_name"] + " " + all_players["elements"][0]["second_name"]
 
 
