@@ -53,7 +53,8 @@ def get_players():
     plt.savefig("pos_form.png")
     plt.close()
 
-    pick_team(all_players, player_names, form, cost, position)
+    return pick_team(all_players, player_names, form, cost, position)
+    #return player_names, form, cost, position
 
 def pick_team(all_players, player_names, form, cost, position):
     extra_cash = 0
@@ -72,12 +73,29 @@ def pick_team(all_players, player_names, form, cost, position):
         else:
             fwds.append([player_names[i], cost[i], form[i]])
 
-    fin_fwds = pick_players(fwds, 2, 330)
+    fin_fwds = pick_players(fwds, 330, 0, 0, [0,0])
 
-    return player_names, form, cost, y_pred
+    return player_names, form, cost, fin_fwds
 
-def pick_players(players, spots, budget):
-    
+def pick_players(players, budget, pid, index, fin_arr):
+    if pid != 0:
+        if index == (len(fin_arr)-1) and pid >= len(players):
+            return fin_arr
+        if index > len(fin_arr)-1:
+            return [0,0]
+        if pid > len(players)-1:
+            return [0,0]
+        if budget-players[pid][1] < 0:
+            fin_arr[index] = pick_players(players, budget, pid+1, index, fin_arr)
+        else:
+            return [players[pid][1], players[pid][2]]
+    else:
+        if (pick_players(players, budget, pid+1, index, fin_arr))[1] >= (pick_players(players, budget-players[pid][1], pid+1, index+1, fin_arr))[1]:
+            fin_arr[index] = pick_players(players, budget, pid+1, index, fin_arr)
+        else:
+            fin_arr[index] = pick_players(players, budget-players[pid][1], pid+1, index+1, fin_arr)
+        
+    return fin_arr
 # print all_players["elements"][0]["first_name"] + " " + all_players["elements"][0]["second_name"]
 
 
