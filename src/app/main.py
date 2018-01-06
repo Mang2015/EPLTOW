@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from flask import Flask, request, render_template
 from app import app
 from app.models import *
+from app.pclass import *
 import json
 import requests
 import sys
@@ -16,9 +17,9 @@ sys.dont_write_bytecode = True
 @app.route('/', methods = ['GET', 'POST'])
 def index():
 
-    player_names, form, cost, player_arr = get_players()
+    player_names, form, cost, fwds, mids, defs, gk = get_players()
     count = len(player_names)
-    return render_template('index.html', player_names=player_names, form=form, cost=cost, count=count, player_arr=player_arr)
+    return render_template('index.html', player_names=player_names, form=form, cost=cost, count=count, fwds=fwds, mids=mids, defs=defs, gk=gk)
 
 def get_players():
 
@@ -36,9 +37,12 @@ def get_players():
     length = len(player_names)
     player_arr = []             # List to hold form and cost for every player
     position_arr = []           # List to hold position and form for every player
+    p_class_arr = []            # List to hold players in class form
     for i in range(length):
         player_arr.append([cost[i], form[i], position[i]])
         position_arr.append([position[i], form[i]])
+        p_class_arr.append(Player(player_names[i], form[i], cost[i], position[i]))
+
 
     k_means_matrix = np.array(player_arr, dtype=float)
     position_form_matrix = np.array(position_arr, dtype=float)
@@ -53,49 +57,47 @@ def get_players():
     plt.savefig("pos_form.png")
     plt.close()
 
-    return pick_team(all_players, player_names, form, cost, position)
+    return pick_team(p_class_arr, player_names, form, cost)
     #return player_names, form, cost, position
 
-def pick_team(all_players, player_names, form, cost, position):
+def pick_team(p_class, player_names, form, cost):
     extra_cash = 0
     gks = []
     defs = []
     mids = []
     fwds = []
 
-    for i in range(len(position)):
-        if position[i] == 1:
-            gks.append([player_names[i], cost[i], form[i]])
-        elif position[i] == 2:
-            defs.append([player_names[i], cost[i], form[i]])
-        elif position[i] == 3:
-            mids.append([player_names[i], cost[i], form[i]])
+    for i in range(len(p_class)):
+        if p_class[i].get_position() == 1:
+            gks.append(p_class[i])
+        elif p_class[i].get_position() == 2:
+            defs.append(p_class[i])
+        elif p_class[i].get_position() == 3:
+            mids.append(p_class[i])
         else:
-            fwds.append([player_names[i], cost[i], form[i]])
+            fwds.append(p_class[i])
 
-    fin_fwds = pick_players(fwds, 330, 0, 0, [0,0])
+    fin_fwds, extra_cash = pick_players(fwds, 330, 2)
+    fin_mids, extra_cash = pick_players(mids, 330+extra_cash, 4)
+    fin_defs, extra_cash = pick_players(defs, 330+extra_cash, 4)
+    fin_gk, extra_cash = pick_players(gks, extra_cash, 1)
 
-    return player_names, form, cost, fin_fwds
+    return player_names, form, cost, fin_fwds, fin_mids, fin_defs, fin_gk
 
-def pick_players(players, budget, pid, index, fin_arr):
-    if pid != 0:
-        if index == (len(fin_arr)-1) and pid >= len(players):
-            return fin_arr
-        if index > len(fin_arr)-1:
-            return [0,0]
-        if pid > len(players)-1:
-            return [0,0]
-        if budget-players[pid][1] < 0:
-            fin_arr[index] = pick_players(players, budget, pid+1, index, fin_arr)
+def pick_players(players, budget, count):
+    sort_by_form = sorted(players, key=lambda x:x.form, reverse=True)
+    fin_arr = []
+    for i in range(len(players)):
+        if count == 0:
+            break
+        elif budget - sort_by_form[i].get_cost() < 0:
+            continue
         else:
-            return [players[pid][1], players[pid][2]]
-    else:
-        if (pick_players(players, budget, pid+1, index, fin_arr))[1] >= (pick_players(players, budget-players[pid][1], pid+1, index+1, fin_arr))[1]:
-            fin_arr[index] = pick_players(players, budget, pid+1, index, fin_arr)
-        else:
-            fin_arr[index] = pick_players(players, budget-players[pid][1], pid+1, index+1, fin_arr)
-        
-    return fin_arr
+            budget = budget - sort_by_form[i].get_cost()
+            fin_arr.append(sort_by_form[i].get_name())
+            count = count - 1
+
+    return fin_arr, budget
 # print all_players["elements"][0]["first_name"] + " " + all_players["elements"][0]["second_name"]
 
 
