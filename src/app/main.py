@@ -94,7 +94,7 @@ def pick_players(players, budget, count):
             continue
         else:
             budget = budget - sort_by_form[i].get_cost()
-            fin_arr.append(sort_by_form[i].get_name())
+            fin_arr.append(sort_by_form[i])
             count = count - 1
 
     return fin_arr, budget
