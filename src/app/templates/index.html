@@ -1,6 +1,10 @@
 {% block content %}
-{% for i in range(count) %}
+<!-- {% for i in range(count) %}
 <p>{{player_names[i]}}, {{cost[i]}}, {{form[i]}}</p>
-{% endfor %}
-<p>{{player_arr}}</p>
+{% endfor %} -->
+<p>{{fwds[0].get_name()}} {{fwds[0].get_form()}} {{fwds[0].get_cost()}}, {{fwds[1].get_name()}} {{fwds[1].get_form()}} {{fwds[1].get_cost()}}</p>
+<p>{{mids[0].get_name()}} {{mids[0].get_form()}} {{mids[0].get_cost()}}, {{mids[1].get_name()}} {{mids[1].get_form()}} {{mids[1].get_cost()}}, {{mids[2].get_name()}} {{mids[2].get_form()}} {{mids[2].get_cost()}}, {{mids[3].get_name()}} {{mids[3].get_form()}} {{mids[3].get_cost()}}</p>
+<p>{{defs[0].get_name()}} {{defs[0].get_form()}} {{defs[0].get_cost()}}, {{defs[1].get_name()}} {{defs[1].get_form()}} {{defs[1].get_cost()}}, {{defs[2].get_name()}} {{defs[2].get_form()}} {{defs[2].get_cost()}}, {{defs[3].get_name()}} {{defs[3].get_form()}} {{defs[3].get_cost()}}</p>
+<p>{{gk[0].get_name()}} {{gk[0].get_form()}} {{gk[0].get_cost()}}</p>
+
 {% endblock %}
